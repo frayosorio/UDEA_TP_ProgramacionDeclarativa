@@ -1,10 +1,12 @@
 DO $$
 DECLARE 
-	nuevoIdPais INTEGER; nuevoIdCiudad INTEGER; nuevoIdEstadio INTEGER;
+	nuevoIdPais INTEGER; nuevoIdCiudad INTEGER; nuevoIdEstadio INTEGER; nuevoIdGrupo INTEGER;
 	idCatar INTEGER; idCampeonatoCatar INTEGER;
 	idEstadio1 INTEGER; idEstadio2 INTEGER; idEstadio3 INTEGER; idEstadio4 INTEGER;
 	idEstadio5 INTEGER; idEstadio6 INTEGER; idEstadio7 INTEGER; idEstadio8 INTEGER;
 	idCiudad1 INTEGER; idCiudad2 INTEGER; idCiudad3 INTEGER; idCiudad4 INTEGER; idCiudad5 INTEGER;
+	idPais1Grupo INTEGER; idPais2Grupo INTEGER; idPais3Grupo INTEGER; idPais4Grupo INTEGER;
+	totalPaises INTEGER; nuevoIdEncuentro INTEGER;
 BEGIN
 	SELECT MAX(id) + 1 INTO nuevoIdPais
 		FROM pais;
@@ -184,5 +186,191 @@ BEGIN
 		nuevoIdEstadio := nuevoIdEstadio + 1;
 	END IF;
 
+	--obtener los grupos del campeonato
+	SELECT id INTO nuevoIdGrupo
+		FROM grupo
+		WHERE grupo='A'
+		AND idcampeonato=idCampeonatoCatar;
+
+	IF nuevoIdGrupo IS NULL THEN
+		SELECT MAX(id) + 1 INTO nuevoIdGrupo
+			FROM grupo;
+
+		--se van a agregar los nuevos grupos
+		INSERT INTO grupo
+			(id, grupo, idcampeonato)
+			VALUES
+			(nuevoIdGrupo, 'A', idCampeonatoCatar),
+			(nuevoIdGrupo+1, 'B', idCampeonatoCatar),
+			(nuevoIdGrupo+2, 'C', idCampeonatoCatar),
+			(nuevoIdGrupo+3, 'D', idCampeonatoCatar),
+			(nuevoIdGrupo+4, 'E', idCampeonatoCatar),
+			(nuevoIdGrupo+5, 'F', idCampeonatoCatar),
+			(nuevoIdGrupo+6, 'G', idCampeonatoCatar),
+			(nuevoIdGrupo+7, 'H', idCampeonatoCatar);
+	END IF;
+
+	--obtener los paises del grupo A
+	idPais1Grupo = idCatar;
+
+	SELECT id INTO idPais2Grupo 
+		FROM pais
+		WHERE pais = 'Ecuador';
+	IF idPais2Grupo IS NULL THEN
+		INSERT INTO pais
+			(id, pais, entidad)
+			VALUES(nuevoIdPais, 'Ecuador', '');
+		idPais2Grupo := nuevoIdPais;
+		nuevoIdPais := nuevoIdPais + 1;
+	END IF;
+	
+	SELECT id INTO idPais3Grupo 
+		FROM pais
+		WHERE pais = 'Senegal';
+	IF idPais3Grupo IS NULL THEN
+		INSERT INTO pais
+			(id, pais, entidad)
+			VALUES(nuevoIdPais, 'Senegal', '');
+		idPais3Grupo := nuevoIdPais;
+		nuevoIdPais := nuevoIdPais + 1;
+	END IF;
+
+	SELECT id INTO idPais4Grupo 
+		FROM pais
+		WHERE pais = 'Holanda';
+	IF idPais4Grupo IS NULL THEN
+		INSERT INTO pais
+			(id, pais, entidad)
+			VALUES(nuevoIdPais, 'Holanda', '');
+		idPais4Grupo := nuevoIdPais;
+		nuevoIdPais := nuevoIdPais + 1;
+	END IF;
+
+	SELECT COUNT(*) INTO totalPaises
+		FROM grupopais
+		WHERE idgrupo = nuevoIdGrupo;
+	IF totalPaises = 0 THEN
+		INSERT INTO grupopais
+			(idgrupo, idpais)
+			VALUES
+			(nuevoIdGrupo, idPais1Grupo),
+			(nuevoIdGrupo, idPais2Grupo),
+			(nuevoIdGrupo, idPais3Grupo),
+			(nuevoIdGrupo, idPais4Grupo);
+	END IF;
+
+	--registrar los encuentros
+	SELECT MAX(id) + 1 INTO nuevoIdEncuentro
+			FROM encuentro;
+
+	--Catar 0 - 2 Ecuador
+	IF NOT EXISTS(SELECT * FROM encuentro
+				WHERE idpais1 = idPais1Grupo AND idpais2 = idPais2Grupo
+				AND idcampeonato = idCampeonatoCatar AND idfase = 1) THEN
+		INSERT INTO encuentro
+			(id, idpais1, goles1, idpais2, goles2, fecha, idestadio, idfase, idcampeonato)
+			VALUES (nuevoIdEncuentro, idPais1Grupo, 0, idPais2Grupo, 2, '2022-11-20', idestadio1, 1, idCampeonatoCatar);
+			nuevoIdEncuentro = nuevoIdEncuentro + 1;
+	END IF;
+
+	--Catar 1 - 3 Senegal
+	IF NOT EXISTS(SELECT * FROM encuentro
+				WHERE idpais1 = idPais1Grupo AND idpais2 = idPais3Grupo
+				AND idcampeonato = idCampeonatoCatar AND idfase = 1) THEN
+		INSERT INTO encuentro
+			(id, idpais1, goles1, idpais2, goles2, fecha, idestadio, idfase, idcampeonato)
+			VALUES (nuevoIdEncuentro, idPais1Grupo, 1, idPais3Grupo, 3, '2022-11-25', idestadio4, 1, idCampeonatoCatar);
+			nuevoIdEncuentro = nuevoIdEncuentro + 1;
+	END IF;
+
+	--Holanda 1 - 1 Ecuador
+	IF NOT EXISTS(SELECT * FROM encuentro
+				WHERE idpais1 = idPais4Grupo AND idpais2 = idPais2Grupo
+				AND idcampeonato = idCampeonatoCatar AND idfase = 1) THEN
+		INSERT INTO encuentro
+			(id, idpais1, goles1, idpais2, goles2, fecha, idestadio, idfase, idcampeonato)
+			VALUES (nuevoIdEncuentro, idPais4Grupo, 1, idPais2Grupo, 1, '2022-11-25', idestadio7, 1, idCampeonatoCatar);
+			nuevoIdEncuentro = nuevoIdEncuentro + 1;
+	END IF;
+
+	--Ecuador 1 - 2 Senegal
+	IF NOT EXISTS(SELECT * FROM encuentro
+				WHERE idpais1 = idPais2Grupo AND idpais2 = idPais3Grupo
+				AND idcampeonato = idCampeonatoCatar AND idfase = 1) THEN
+		INSERT INTO encuentro
+			(id, idpais1, goles1, idpais2, goles2, fecha, idestadio, idfase, idcampeonato)
+			VALUES (nuevoIdEncuentro, idPais2Grupo, 1, idPais3Grupo, 2, '2022-11-29', idestadio7, 1, idCampeonatoCatar);
+			nuevoIdEncuentro = nuevoIdEncuentro + 1;
+	END IF;
+
+	--Holanda 2 - 0 Catar
+	IF NOT EXISTS(SELECT * FROM encuentro
+				WHERE idpais1 = idPais4Grupo AND idpais2 = idPais1Grupo
+				AND idcampeonato = idCampeonatoCatar AND idfase = 1) THEN
+		INSERT INTO encuentro
+			(id, idpais1, goles1, idpais2, goles2, fecha, idestadio, idfase, idcampeonato)
+			VALUES (nuevoIdEncuentro, idPais4Grupo, 2, idPais1Grupo, 0, '2022-11-29', idestadio1, 1, idCampeonatoCatar);
+			nuevoIdEncuentro = nuevoIdEncuentro + 1;
+	END IF;
+
+	--obtener los paises del grupo B
+	SELECT id INTO idPais1Grupo 
+		FROM pais
+		WHERE pais = 'Inglaterra';
+	IF idPais1Grupo IS NULL THEN
+		INSERT INTO pais
+			(id, pais, entidad)
+			VALUES(nuevoIdPais, 'Inglaterra', '');
+		idPais1Grupo := nuevoIdPais;
+		nuevoIdPais := nuevoIdPais + 1;
+	END IF;
+
+	SELECT id INTO idPais2Grupo 
+		FROM pais
+		WHERE pais = 'Irán';
+	IF idPais2Grupo IS NULL THEN
+		INSERT INTO pais
+			(id, pais, entidad)
+			VALUES(nuevoIdPais, 'Irán', '');
+		idPais2Grupo := nuevoIdPais;
+		nuevoIdPais := nuevoIdPais + 1;
+	END IF;
+	
+	SELECT id INTO idPais3Grupo 
+		FROM pais
+		WHERE pais = 'Estados Unidos';
+	IF idPais3Grupo IS NULL THEN
+		INSERT INTO pais
+			(id, pais, entidad)
+			VALUES(nuevoIdPais, 'Estados Unidos', '');
+		idPais3Grupo := nuevoIdPais;
+		nuevoIdPais := nuevoIdPais + 1;
+	END IF;
+
+	SELECT id INTO idPais4Grupo 
+		FROM pais
+		WHERE pais = 'Gales';
+	IF idPais4Grupo IS NULL THEN
+		INSERT INTO pais
+			(id, pais, entidad)
+			VALUES(nuevoIdPais, 'Gales', '');
+		idPais4Grupo := nuevoIdPais;
+		nuevoIdPais := nuevoIdPais + 1;
+	END IF;
+
+	SELECT COUNT(*) INTO totalPaises
+		FROM grupopais
+		WHERE idgrupo = nuevoIdGrupo;
+	IF totalPaises = 0 THEN
+		INSERT INTO grupopais
+			(idgrupo, idpais)
+			VALUES
+			(nuevoIdGrupo+1, idPais1Grupo),
+			(nuevoIdGrupo+1, idPais2Grupo),
+			(nuevoIdGrupo+1, idPais3Grupo),
+			(nuevoIdGrupo+1, idPais4Grupo);
+	END IF;
+
+	
 
 END $$;
