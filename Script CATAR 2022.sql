@@ -360,7 +360,7 @@ BEGIN
 
 	SELECT COUNT(*) INTO totalPaises
 		FROM grupopais
-		WHERE idgrupo = nuevoIdGrupo;
+		WHERE idgrupo = nuevoIdGrupo+1;
 	IF totalPaises = 0 THEN
 		INSERT INTO grupopais
 			(idgrupo, idpais)
@@ -371,6 +371,41 @@ BEGIN
 			(nuevoIdGrupo+1, idPais4Grupo);
 	END IF;
 
+	DROP TABLE IF EXISTS tmp_encuentros;
+
+
+	CREATE TEMP TABLE tmp_encuentros(
+		id int,
+		IdPais1 int, 
+		IdPais2 int, 
+		IdFase int, 
+		IdCampeonato int, 
+		IdEstadio int, 
+		Fecha DATE, 
+		Goles1 int, 
+		Goles2 int
+	);
+
+	INSERT INTO tmp_encuentros
+		(id, idpais1, goles1, idpais2, goles2, fecha, idestadio, idfase, idcampeonato)
+		VALUES(nuevoIdEncuentro, idPais1Grupo, 6, idPais2Grupo, 2, '2022-11-21', idestadio7, 1, idCampeonatoCatar),
+			(nuevoIdEncuentro+1, idPais3Grupo, 1, idPais4Grupo, 1, '2022-11-21', idestadio6, 1, idCampeonatoCatar),
+			(nuevoIdEncuentro+2, idPais4Grupo, 0, idPais2Grupo, 2, '2022-11-25', idestadio6, 1, idCampeonatoCatar),
+			(nuevoIdEncuentro+3, idPais1Grupo, 0, idPais3Grupo, 0, '2022-11-25', idestadio1, 1, idCampeonatoCatar),
+			(nuevoIdEncuentro+4, idPais4Grupo, 0, idPais1Grupo, 3, '2022-11-29', idestadio6, 1, idCampeonatoCatar),
+			(nuevoIdEncuentro+5, idPais2Grupo, 0, idPais3Grupo, 1, '2022-11-29', idestadio4, 1, idCampeonatoCatar);
 	
+	INSERT INTO encuentro
+		(id, idpais1, goles1, idpais2, goles2, fecha, idestadio, idfase, idcampeonato)
+		SELECT id, idpais1, goles1, idpais2, goles2, fecha, idestadio, idfase, idcampeonato
+			FROM tmp_encuentros
+		ON CONFLICT(idpais1, idpais2, idcampeonato, idfase) 
+			DO UPDATE 
+				SET goles1 = EXCLUDED.goles1,
+					goles2 = EXCLUDED.goles2,
+					idestadio = EXCLUDED.idestadio,
+					fecha = EXCLUDED.fecha;
+
+	DROP TABLE IF EXISTS tmp_encuentros;
 
 END $$;
